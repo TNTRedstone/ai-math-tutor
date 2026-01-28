@@ -2,6 +2,7 @@ import { promptStep1Gen, promptStep2Gen, promptStep3Gen } from './prompt-gen';
 import type { ReasoningEffort, Message, CheckDiagnostics } from './types';
 import { browser } from '$app/environment';
 
+let loadingStatus = $state('none');
 const STORAGE_KEY = 'ai-tutor-conversation';
 
 function loadConversationFromStorage() {
@@ -87,13 +88,15 @@ async function generateOutput(diagnosticsNotes: string, attempt: number) {
 		];
 		return;
 	}
-
+	loadingStatus = 'Planning how to best help you';
 	const plan = await triggerSendMessage(
 		promptStep1Gen(conversation.messages, diagnosticsNotes),
 		'medium'
 	);
 
+	loadingStatus = 'Writing a response';
 	const output = await triggerSendMessage(promptStep2Gen(plan), 'medium');
+	loadingStatus = 'Checking the response for safety';
 	const diagnosticsString = await triggerSendMessage(promptStep3Gen(output, plan), 'medium');
 
 	let diagnostics: CheckDiagnostics;
@@ -122,4 +125,8 @@ export function resetConversation() {
 	if (browser) {
 		localStorage.removeItem(STORAGE_KEY);
 	}
+}
+
+export function getloadingStatus() {
+	return loadingStatus;
 }

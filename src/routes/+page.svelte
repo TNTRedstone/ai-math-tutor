@@ -3,7 +3,8 @@
 		sendUserMessage,
 		conversation,
 		resetConversation,
-		saveConversationToStorage
+		saveConversationToStorage,
+		getloadingStatus
 	} from '$lib/ai-engine.svelte';
 	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
@@ -103,7 +104,7 @@
 							<li>• I'll provide step-by-step solutions</li>
 							<li>• Practice with similar problems</li>
 							<li>• Build understanding at your pace</li>
-							<li>• You think Calvin is either really cool or really weird for making it</li>
+							<li>• Think Calvin is either really cool or really weird for making this</li>
 						</ul>
 					</div>
 				</div>
@@ -129,7 +130,7 @@
 						class="flex items-center gap-2 rounded-lg border border-blue-200 bg-white px-4 py-2 text-blue-600 shadow-sm"
 					>
 						<Loader class="h-4 w-4 animate-spin" />
-						<span class="text-sm font-medium">Working on your problem...</span>
+						<span class="text-sm font-medium">{getloadingStatus()}</span>
 					</div>
 				</div>
 			{/if}
