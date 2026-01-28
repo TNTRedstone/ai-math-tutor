@@ -2,19 +2,30 @@
 	import { sendUserMessage, conversation } from '$lib/ai-engine.svelte';
 	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Loader, SendHorizontal } from 'lucide-svelte';
+	import { Loader, SendHorizontal, AlertCircle } from 'lucide-svelte';
 	import MathMLRenderer from '$lib/components/MathMLRenderer.svelte';
 
 	let userMessage = $state('');
 	let loading = $state(false);
 	let scrollContainer: HTMLElement | null = $state(null);
 	let textareaElement: HTMLTextAreaElement;
+	let timeLeft = $state(0);
+
+	let isRateLimited = $derived(conversation.rateLimitedUntil > Date.now());
+
+	$effect(() => {
+		if (isRateLimited) {
+			const interval = setInterval(() => {
+				timeLeft = Math.ceil((conversation.rateLimitedUntil - Date.now()) / 1000);
+				if (timeLeft <= 0) clearInterval(interval);
+			}, 1000);
+			return () => clearInterval(interval);
+		}
+	});
 
 	function handleInput() {
 		if (textareaElement) {
-			// Reset height to auto to get the correct scrollHeight
 			textareaElement.style.height = 'auto';
-			// Set height to scrollHeight to expand as needed
 			textareaElement.style.height = textareaElement.scrollHeight + 'px';
 		}
 	}
@@ -27,12 +38,11 @@
 	}
 
 	async function handleSend() {
-		if (!userMessage.trim() || loading) return;
+		if (!userMessage.trim() || loading || isRateLimited) return;
 		const msg = userMessage;
 		userMessage = '';
 		loading = true;
 
-		// Reset textarea height to single line after sending
 		if (textareaElement) {
 			textareaElement.style.height = 'auto';
 		}
@@ -102,6 +112,17 @@
 					</div>
 				</div>
 			{/if}
+
+			{#if isRateLimited}
+				<div class="flex justify-center py-4">
+					<div
+						class="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-red-700 shadow-sm"
+					>
+						<AlertCircle class="h-4 w-4" />
+						<span class="text-sm font-medium">Wait {timeLeft}s to send another message</span>
+					</div>
+				</div>
+			{/if}
 		</div>
 	</main>
 
@@ -117,19 +138,21 @@
 				<div class="min-w-0 flex-1">
 					<textarea
 						bind:this={textareaElement}
-						placeholder="Type your math problem here..."
+						placeholder={isRateLimited
+							? `Cooldown active (${timeLeft}s)...`
+							: 'Type your math problem here...'}
 						bind:value={userMessage}
-						disabled={loading}
+						disabled={loading || isRateLimited}
 						rows="1"
 						oninput={handleInput}
 						onkeydown={handleKeyDown}
-						class="w-full resize-none rounded-xl border-2 border-zinc-300 bg-white px-5 py-4 text-base shadow-sm transition-all focus:outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
-					/>
+						class="w-full resize-none rounded-xl border-2 border-zinc-300 bg-white px-5 py-4 text-base shadow-sm transition-all focus:outline-none focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20 disabled:bg-zinc-100"
+					></textarea>
 				</div>
 				<Button
 					type="submit"
-					disabled={loading || !userMessage.trim()}
-					class="h-14 flex-shrink-0 rounded-xl bg-blue-600 px-6 text-base font-medium text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-400"
+					disabled={loading || isRateLimited || !userMessage.trim()}
+					class="h-14 shrink-0 rounded-xl bg-blue-600 px-6 text-base font-medium text-white transition-all hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-zinc-400"
 				>
 					{#if loading}
 						<Loader class="mr-2 h-5 w-5 animate-spin" />

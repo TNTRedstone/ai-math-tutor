@@ -2,7 +2,8 @@ import { promptStep1Gen, promptStep2Gen, promptStep3Gen } from './prompt-gen';
 import type { ReasoningEffort, Message, CheckDiagnostics } from './types';
 
 export const conversation = $state({
-	messages: [] as Message[]
+	messages: [] as Message[],
+	rateLimitedUntil: 0
 });
 
 async function triggerSendMessage(systemPrompt: string, reasoning_effort: ReasoningEffort) {
@@ -12,13 +13,32 @@ async function triggerSendMessage(systemPrompt: string, reasoning_effort: Reason
 		body: JSON.stringify({ systemPrompt, reasoning_effort })
 	});
 
+	if (response.status === 429) {
+		const body = await response.json();
+		const seconds = parseInt(body.retryAfter || '60', 10);
+		conversation.rateLimitedUntil = Date.now() + seconds * 1000;
+		throw new Error('RATE_LIMIT');
+	}
+
 	if (!response.ok) throw new Error(`API Error: ${await response.text()}`);
 	return await response.text();
 }
 
 export async function sendUserMessage(message: string) {
 	conversation.messages = [...conversation.messages, { sender: 'user', contents: message }];
-	await generateOutput('', 0); // Track attempts to prevent infinite loops
+	try {
+		await generateOutput('', 0);
+	} catch (e: any) {
+		if (e.message === 'RATE_LIMIT') {
+			conversation.messages = [
+				...conversation.messages,
+				{
+					sender: 'model',
+					contents: 'Rate limit reached. Please wait a moment before trying again.'
+				}
+			];
+		}
+	}
 }
 
 async function generateOutput(diagnosticsNotes: string, attempt: number) {
@@ -39,10 +59,8 @@ async function generateOutput(diagnosticsNotes: string, attempt: number) {
 	);
 
 	const output = await triggerSendMessage(promptStep2Gen(plan), 'medium');
-
 	const diagnosticsString = await triggerSendMessage(promptStep3Gen(output, plan), 'medium');
 
-	// Safety for malformed JSON from Auditor
 	let diagnostics: CheckDiagnostics;
 	try {
 		diagnostics = JSON.parse(diagnosticsString);
@@ -50,12 +68,9 @@ async function generateOutput(diagnosticsNotes: string, attempt: number) {
 		diagnostics = { succeeds: false, notes: 'Auditor returned invalid JSON.' };
 	}
 
-
 	if (diagnostics.succeeds) {
 		conversation.messages = [...conversation.messages, { sender: 'model', contents: output }];
-		console.log(output)
 	} else {
-		// Recursive retry with failure notes
 		await generateOutput(diagnostics.notes || 'General failure', attempt + 1);
 	}
 }
