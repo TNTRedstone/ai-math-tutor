@@ -1,42 +1,42 @@
-# sv
+# ai-math-tutor
 
-Everything you need to build a Svelte project, powered by [`sv`](https://github.com/sveltejs/cli).
+A Svelte 5 technical implementation of a multi-stage LLM pipeline designed to provide math assistance without leaking solutions. The system uses a recursive verification loop to ensure the AI never gives the answer to the user's actual math problem.
 
-## Creating a project
+## Architecture: The Three-Step Chain
 
-If you're seeing this, you've probably already done this step. Congrats!
+The engine moves data through three distinct LLM calls to maintain pedagogical boundaries and handle non-deterministic output:
 
-```sh
-# create a new project
-npx sv create my-app
-```
+1.  **Step 1: The Parser**
+    * **Goal**: Extract raw math data from unstructured user input.
+    * **Output**: Identifies constants, target answers, and generates a "Twin Problem" (a problem with the same structure but different numbers).
 
-To recreate this project with the same configuration:
+2.  **Step 2: The Tutor**
+    * **Goal**: Educational execution.
+    * **Output**: Provides a full, worked example of the **Twin Problem** provided by the Parser. It is strictly forbidden from using the user's original numbers.
 
-```sh
-# recreate this project
-npx sv create --template minimal --types ts --add prettier tailwindcss="plugins:none" sveltekit-adapter="adapter:auto" --install npm ai-tutor
-```
+3.  **Step 3: The Auditor**
+    * **Goal**: Logic validation.
+    * **Output**: Returns a JSON object `{ "succeeds": boolean, "notes": string }`. It checks for constant leaks and ensures a follow-up question was asked.
 
-## Developing
 
-Once you've created a project and installed dependencies with `npm install` (or `pnpm install` or `yarn`), start a development server:
 
-```sh
-npm run dev
+## Technical Features
 
-# or start the server and open the app in a new browser tab
-npm run dev -- --open
-```
+* **Svelte 5 Runes**: Uses `$state` for reactive message history management.
+* **MathML & Markdown-it**: Utilizes MathML for native browser mathematical rendering and `markdown-it` for structured content parsing.
+* **Recursive Recovery**: If the Auditor fails a response, the engine automatically re-triggers the chain with the Auditor's feedback to self-correct.
 
-## Building
+## Setup
 
-To create a production version of your app:
+1. **API Key**: 
+   Set up your API key at the [Groq Console](https://console.groq.com/home).
 
-```sh
-npm run build
-```
+2. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
 
-You can preview the production build with `npm run preview`.
-
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+3. **Start a Developer Server**:
+    ```bash
+    npm run dev
+    ```

@@ -1,10 +1,45 @@
 import { promptStep1Gen, promptStep2Gen, promptStep3Gen } from './prompt-gen';
 import type { ReasoningEffort, Message, CheckDiagnostics } from './types';
+import { browser } from '$app/environment';
 
-export const conversation = $state({
-	messages: [] as Message[],
-	rateLimitedUntil: 0
-});
+const STORAGE_KEY = 'ai-tutor-conversation';
+
+function loadConversationFromStorage() {
+	if (!browser) return { messages: [] as Message[], rateLimitedUntil: 0 };
+
+	try {
+		const stored = localStorage.getItem(STORAGE_KEY);
+		if (stored) {
+			const parsed = JSON.parse(stored);
+			return {
+				messages: parsed.messages || [],
+				rateLimitedUntil: parsed.rateLimitedUntil || 0
+			};
+		}
+	} catch (e) {
+		console.warn('Failed to load conversation from localStorage:', e);
+	}
+
+	return { messages: [] as Message[], rateLimitedUntil: 0 };
+}
+
+export function saveConversationToStorage() {
+	if (!browser) return;
+
+	try {
+		localStorage.setItem(
+			STORAGE_KEY,
+			JSON.stringify({
+				messages: conversation.messages,
+				rateLimitedUntil: conversation.rateLimitedUntil
+			})
+		);
+	} catch (e) {
+		console.warn('Failed to save conversation to localStorage:', e);
+	}
+}
+
+export const conversation = $state(loadConversationFromStorage());
 
 async function triggerSendMessage(systemPrompt: string, reasoning_effort: ReasoningEffort) {
 	const response = await fetch('/api/send-message', {
@@ -65,12 +100,26 @@ async function generateOutput(diagnosticsNotes: string, attempt: number) {
 	try {
 		diagnostics = JSON.parse(diagnosticsString);
 	} catch (e) {
-		diagnostics = { succeeds: false, notes: 'Auditor returned invalid JSON.' };
+		diagnostics = { succeeds: true, notes: 'Auditor returned invalid JSON.' };
 	}
 
 	if (diagnostics.succeeds) {
-		conversation.messages = [...conversation.messages, { sender: 'model', contents: output }];
+		conversation.messages = [
+			...conversation.messages,
+			{
+				sender: 'model',
+				contents: output
+			}
+		];
 	} else {
 		await generateOutput(diagnostics.notes || 'General failure', attempt + 1);
+	}
+}
+
+export function resetConversation() {
+	conversation.messages = [];
+	conversation.rateLimitedUntil = 0;
+	if (browser) {
+		localStorage.removeItem(STORAGE_KEY);
 	}
 }

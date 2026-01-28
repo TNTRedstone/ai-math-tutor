@@ -1,8 +1,13 @@
 <script lang="ts">
-	import { sendUserMessage, conversation } from '$lib/ai-engine.svelte';
+	import {
+		sendUserMessage,
+		conversation,
+		resetConversation,
+		saveConversationToStorage
+	} from '$lib/ai-engine.svelte';
 	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Loader, SendHorizontal, AlertCircle } from 'lucide-svelte';
+	import { Loader, SendHorizontal, AlertCircle, Plus, Github } from 'lucide-svelte';
 	import MathMLRenderer from '$lib/components/MathMLRenderer.svelte';
 
 	let userMessage = $state('');
@@ -12,6 +17,17 @@
 	let timeLeft = $state(0);
 
 	let isRateLimited = $derived(conversation.rateLimitedUntil > Date.now());
+
+	$effect(() => {
+		saveConversationToStorage();
+	});
+
+	function handleNewConversation() {
+		resetConversation();
+		if (scrollContainer) {
+			scrollContainer.scrollTop = 0;
+		}
+	}
 
 	$effect(() => {
 		if (isRateLimited) {
@@ -65,6 +81,10 @@
 		<div class="flex items-center gap-3">
 			<span class="text-lg font-bold tracking-tight">Math Tutor</span>
 		</div>
+		<Button onclick={handleNewConversation} variant="outline" size="sm" class="gap-2">
+			<Plus class="h-4 w-4" />
+			New Conversation
+		</Button>
 	</header>
 
 	<main bind:this={scrollContainer} class="flex-1 overflow-y-auto">
@@ -83,6 +103,7 @@
 							<li>• I'll provide step-by-step solutions</li>
 							<li>• Practice with similar problems</li>
 							<li>• Build understanding at your pace</li>
+							<li>• You think Calvin is either really cool or really weird for making it</li>
 						</ul>
 					</div>
 				</div>
@@ -127,13 +148,13 @@
 	</main>
 
 	<footer class="border-t bg-white p-6">
-		<div class="mx-auto max-w-5xl">
+		<div class="mx-auto flex max-w-5xl items-center">
 			<form
 				onsubmit={(e) => {
 					e.preventDefault();
 					handleSend();
 				}}
-				class="relative flex items-center gap-4"
+				class="relative flex flex-1 items-center gap-4"
 			>
 				<div class="min-w-0 flex-1">
 					<textarea
@@ -163,6 +184,15 @@
 				</Button>
 			</form>
 		</div>
+		<a
+			href="https://github.com/tntredstone/ai-math-tutor"
+			target="_blank"
+			rel="noopener noreferrer"
+			class="fixed right-6 bottom-6 rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900"
+			title="View on GitHub"
+		>
+			<Github class="h-5 w-5" />
+		</a>
 	</footer>
 </div>
 

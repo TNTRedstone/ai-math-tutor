@@ -20,7 +20,7 @@ ${diagnosticsNotes}
 1. TYPE: [PROBLEM, CONCEPT, or OUT_OF_SCOPE]
 2. SENTIMENT: [CALM, FRUSTRATED, DISENGAGED, CONFIDENT]
 3. ACTIVE PROBLEM: The specific math question from the latest message.
-4. ORIGINAL CONSTANTS: List every number/coefficient in the user's active problem.
+4. ORIGINAL CONSTANTS: List every number/coefficient (variable names don't count) in the user's active problem.
 5. TARGET ANSWER: Solve the problem step-by-step for internal reference.
 6. PHASE: 
    - PHASE 1: New problem or first time being stuck.
@@ -32,8 +32,8 @@ If the user seems at risk of harming themselves or others, please put in your in
 
 ### TEACHING PLAN GUIDELINES:
 - IF SENTIMENT IS FRUSTRATED: The Tutor MUST lead with a short, empathetic validation of the difficulty.
-- IF PHASE 1: Instruct Tutor to solve a FULL Parallel Problem with different constants and a fresh story context.
-- IF PHASE 2: Instruct Tutor to provide a Parallel Problem but STOP halfway and ask the student to finish it.
+- IF PHASE 1: Instruct Tutor to solve a FULL Parallel Problem with different constants. The problem's format should be the same between the paralell problem and the user's problem (f.e. if the user just gives an equation, there should be no story or word problem)
+- IF PHASE 2: Instruct Tutor to provide a Parallel Problem but STOP halfway and ask the student to finish it. The problem's format should be the same between the paralell problem and the user's problem (f.e. if the user just gives an equation, there should be no story or word problem)
 - IF PHASE 3: Identify the logic gap (e.g., sign error). Instruct Tutor to explain the rule (the "Why") and tell the student to re-attempt their original problem. 
 - **STRICT RULE**: In Phase 3, the Tutor is FORBIDDEN from providing the final solution to the original problem.
 
