@@ -8,7 +8,7 @@
 	} from '$lib/ai-engine.svelte';
 	import { tick } from 'svelte';
 	import { Button } from '$lib/components/ui/button';
-	import { Loader, SendHorizontal, AlertCircle, Plus, Github } from 'lucide-svelte';
+	import { Loader, SendHorizontal, AlertCircle, Plus, Github, FileText } from 'lucide-svelte';
 	import MathMLRenderer from '$lib/components/MathMLRenderer.svelte';
 
 	let userMessage = $state('');
@@ -185,15 +185,26 @@
 				</Button>
 			</form>
 		</div>
-		<a
-			href="https://github.com/tntredstone/ai-math-tutor"
-			target="_blank"
-			rel="noopener noreferrer"
-			class="fixed right-6 bottom-6 rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900"
-			title="View on GitHub"
-		>
-			<Github class="h-5 w-5" />
-		</a>
+		<div class="fixed right-6 bottom-6 flex gap-2">
+			<a
+				href="https://github.com/tntredstone/ai-math-tutor"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900"
+				title="View on GitHub"
+			>
+				<Github class="h-5 w-5" />
+			</a>
+			<a
+				href="https://gist.github.com/TNTRedstone/d1a39269ec496aed8d94781c63fb8d77"
+				target="_blank"
+				rel="noopener noreferrer"
+				class="rounded-lg border border-zinc-300 bg-white p-2 text-zinc-600 transition-all hover:bg-zinc-50 hover:text-zinc-900"
+				title="View Methodology"
+			>
+				<FileText class="h-5 w-5" />
+			</a>
+		</div>
 	</footer>
 </div>
 
