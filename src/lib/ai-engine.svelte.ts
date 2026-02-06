@@ -107,6 +107,7 @@ async function generateOutput(diagnosticsNotes: string, attempt: number) {
 	}
 
 	if (diagnostics.succeeds) {
+		console.log(output)
 		conversation.messages = [
 			...conversation.messages,
 			{
